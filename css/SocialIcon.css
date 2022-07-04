@@ -1,0 +1,188 @@
+﻿/* https://www.silocreativo.com/en/create-floating-social-bar-html-css3/ */
+
+.social-sharing {
+    /* display: block; */
+    position: fixed;
+    /*width: 100%;*/
+    left: 0;
+    bottom: 20%;
+    z-index: 2000;
+}
+
+.social-sharing ul.menu-social {
+    list-style: none;
+    text-align: center;
+    width: 60px;
+    padding: 0;
+}
+
+.social-sharing ul.menu-social li {
+    height: 60px;
+    display: block;
+}
+
+.social-sharing ul.menu-social li a {
+    display: block;
+    color: #fff;
+    text-decoration: none;
+    width: 100%;
+    height: 100%;
+}
+
+ul.menu-social li a.facebook {
+    background-color: #42c0f9;
+}
+
+ul.menu-social li a.twitter {
+    background-color: #43d2e4;
+}
+
+ul.menu-social li a.instagram {
+    background-color: #ff7e56;
+}
+
+ul.menu-social li a.whatsapp {
+    background-color: #a8d673;
+}
+
+ul.menu-social li a.skype {
+    background-color: #12A5F4;
+}
+
+ul.menu-social li a::before {
+    content: "\f135";
+    display: inline-block;
+    font-family: FontAwesome;
+    font-size: 30px;
+    vertical-align: middle;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 60px;
+}
+
+ul.menu-social li a.facebook::before {
+    content: "\f09a";
+}
+
+ul.menu-social li a.twitter::before {
+    content: "\f099";
+}
+
+ul.menu-social li a.instagram::before {
+    content: "\f16d";
+}
+
+ul.menu-social li a.whatsapp::before {
+    content: "\f232";
+}
+
+ul.menu-social li a.skype::before {
+    content: "\f17e";
+}
+
+.screen-reader-text {
+    position: absolute;
+    display: none;
+    /* top: -9999em; */
+    /* left: -9999em; */
+}
+.screen-reader-text .text-social
+{
+    margin-top: 5px;
+    font-size: 20px;
+}
+ul.menu-social li a.skype:hover span {
+    display: inline;
+    background: #12A5F4;
+    height: 60px;
+    padding: 10px;
+    margin-left: 10px;
+}
+
+ul.menu-social li a.whatsapp:hover span {
+    display: inline;
+    background: #a8d673;
+    height: 60px;
+    padding: 10px;
+    margin-left: 10px;
+}
+
+ul.menu-social li a.instagram:hover span {
+    display: inline;
+    background: #ff7e56;
+    height: 60px;
+    padding: 10px;
+    margin-left: 10px;
+}
+
+ul.menu-social li a.twitter:hover span {
+    display: inline;
+    background: #43d2e4;
+    height: 60px;
+    padding: 10px;
+    margin-left: 10px;
+}
+
+ul.menu-social li a.facebook:hover span {
+    display: inline;
+    background: #42c0f9;
+    height: 60px;
+    padding: 10px;
+    margin-left: 10px;
+}
+
+
+/* demo stuff */
+
+.link-container {
+    text-align: center;
+}
+
+
+/* Extra small devices (phones, less than 768px) */
+
+
+/* No media query since this is the default in Bootstrap */
+
+
+/* Small devices (tablets, 768px and up) */
+
+@media (min-width: 768px) {}
+
+@media (max-width: 768px) {
+    .social-sharing {
+        position: fixed;
+        width: 100%;
+        left: 0;
+        bottom: 0;
+        z-index: 2000;
+    }
+    .social-sharing ul.menu-social {
+        list-style: none;
+        text-align: center;
+        width: 100%;
+        padding: 0;
+        margin-bottom: 0;
+    }
+    .social-sharing ul.menu-social li {
+        height: 60px;
+        width: 20%;
+        display: inline-block;
+        margin: 0px;
+        float: left;
+    }
+    ul.menu-social li a:hover span {
+        display: none;
+        bottom: -999em;
+    }
+}
+
+
+/* Medium devices (desktops, 992px and up) */
+
+@media (min-width: 992px) {}
+
+
+/* Large devices (large desktops, 1200px and up) */
+
+@media (min-width: 1200px) {}

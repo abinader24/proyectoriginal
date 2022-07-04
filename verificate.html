@@ -1,0 +1,485 @@
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" /><meta name="author" /><title>
+	
+</title><link href="css/bootstrap.min.css" rel="stylesheet" /><link href="css/font-awesome.min.css" rel="stylesheet" /><link href="css/prettyPhoto.css" rel="stylesheet" /><link href="css/animate.css" rel="stylesheet" /><link href="js/sweetalert/dist/sweetalert.css" rel="stylesheet" /><link href="js/DataTables/DataTables-1.10.11/css/dataTables.bootstrap.min.css" rel="stylesheet" /><link href="css/main.css" rel="stylesheet" />
+    <style>
+        @media (max-width: 500px)
+        {
+            .navbar-brand
+            {
+                padding: 5px 5px !important;
+            }
+
+                .navbar-brand h1
+                {
+                    font-size: 20px;
+                }
+
+            #main-slider .carousel .item
+            {
+            }
+        }
+
+        @media (max-width: 500px)
+        {
+            #main-slider .carousel .item
+            {
+                height: 250px;
+            }
+        }
+    </style>
+    <!--[if lt IE 9]>
+    <script src="js/html5shiv.js"></script>
+    <script src="js/respond.min.js"></script>
+    <![endif]-->
+    <link rel="shortcut ico" href="images/ico/favicon.ico" />
+
+    
+
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.prettyPhoto.js"></script>
+    <script src="js/jQuery-Mask-Plugin-master/dist/jquery.mask.min.js"></script>
+    <script src="js/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="js/DataTables/DataTables-1.10.11/js/jquery.dataTables.min.js"></script>
+    <script src="js/DataTables/DataTables-1.10.11/js/dataTables.bootstrap.min.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        var longitud = '';
+        var latitud = '';
+        var altitud = '';
+
+        navigator.geolocation.getCurrentPosition(function (position) {
+            longitud = position.coords.longitude;
+            latitud = position.coords.latitude;
+            altitud = position.coords.altitude;
+        });
+
+        $(document).ready(function () {
+
+        });
+
+        function validarEmail(control) {
+            $("#" + control).css("border-color", "lightgrey");
+            expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            expr2 = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            if (!expr.test($("#" + control).val().trim()) && !expr2.test($("#" + control).val().trim())) {
+                $("#" + control).css("border-color", "red");
+                //alert($("#" + control).val() + ", no es un correo valido!");
+                swal("Error", $("#" + control).val() + ", no es un correo valido!")
+                $("#" + control).focus();
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+
+        function digitoVerificador(cedula) {
+            //Mod 10 el recorido es de derecha a izquierda pero se que no 10 Posiciones
+            x = 1;
+            suma = 0;
+            tsuma = 0;
+            i = 0;
+            verificador = 0;
+            for (var i = 0; i <= 9; i++) {
+                suma = parseInt(cedula.substr(i, 1)) * x;
+                if (suma > 9)
+                { suma = parseInt(suma.toString().substr(0, 1)) + parseInt(suma.toString().substr(1, 1)); }
+                tsuma = tsuma + suma;
+                x++;
+                if (x > 2)
+                { x = 1 };
+            }
+            mod = tsuma % 10;
+            if (mod != 0)
+            { verificador = 10 - mod; }
+            if (verificador == parseInt(cedula.substr(10, 1)))
+                return true;
+            else
+                return false;
+        }
+
+        function validarAreaCode(val) {
+            if (idProvincia < '61') {
+                var tel = val.split(" ")[0];
+                if (tel == '(809)' || tel == '(829)' || tel == '(849)') {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            else {
+                return true;
+            }
+        }
+
+        function validarCampos(frmValidar) {
+            var id = "";
+            var val = "";
+            var guadar = true;
+            var dataVal = "";
+            var dataSize = 0;
+            var label = "";
+
+            $(frmValidar).find(':input:not([type="hidden"])').each(function () {
+                id = this.id
+                val = $(this).val();
+                dataVal = $(this).data("valid");
+                //dataSize = $(this).data("size");
+
+                label = $("label[for='" + id + "']").text();
+                if (label == undefined || label == "") {
+                    label = $(this).attr("placeholder");
+                }
+
+                if (dataVal != undefined || dataVal != "" || id != undefined || id != "") {
+                    //vacio
+                    if (val.length <= 0 && dataVal.indexOf("_R") > -1) {
+                        guadar = false;
+                        this.focus();
+                        msg = "El campo " + label + " es obligatorio...!";
+                        swal("Error", msg, "error")
+                        return false
+                    }
+                    else if (dataVal.indexOf("_T") > -1 && val.length > 0) {
+                        if (validarAreaCode(val) == false) {
+                            guadar = false;
+                            this.focus();
+                            msg = "El campo " + label + " es telefonico debe completar Ej. (809) 123-4567...!";
+                            swal("Error", msg, "error")
+                            return false
+                        }
+                    }
+                    else if (dataVal.indexOf("_F") > -1) {
+                        if (!isDate(fechammddyy(val))) {
+                            guadar = false;
+                            msg = "El campo " + label + " es obligatorio...!";
+                            swal({
+                                title: "Error!",
+                                text: msg,
+                                type: "error"
+                            }, function () {
+                                swal.close();
+                                $('#' + id).val('').focus();
+                            });
+                            return false
+                        }
+                    }
+                }
+            });
+
+            return guadar
+        }
+
+        function isDate(fecha) {
+            return ((new Date(fecha) !== "Invalid Date" && !isNaN(new Date(fecha)))) ? true : false;
+        }
+        function fechayymmdd(fecha) {
+            var Retorna = "";
+            if (fecha.length == 10) {
+                var fec = fecha.split('/');
+                Retorna = fec[2] + "/" + fec[1] + "/" + fec[0];
+            }
+            return Retorna;
+        }
+        function fechammddyy(fecha) {
+            var Retorna = "";
+            if (fecha.length == 10) {
+                var fec = fecha.split('/');
+                Retorna = fec[1] + "/" + fec[0] + "/" + fec[2];
+            }
+            return Retorna;
+        }
+        function MostrarProgreso() {
+            tiempoInicio = new Date();
+            if ($("#modalLoading").is(":visible") != true) {
+                $("#modalLoading").modal({
+                    keyboard: false,
+                    backdrop: 'static'
+                });
+            }
+        }
+
+        function OcultarProgreso() {
+            tiempofinal = new Date();
+            var tiempo = ((tiempofinal - tiempoInicio) / 1000);
+            if (tiempo > 0.5) {
+                OcultarProgresoContinua()
+            }
+            else {
+                setTimeout(OcultarProgresoContinua, 1000);
+            }
+        }
+        function OcultarProgresoContinua() {
+            $('#modalLoading').addClass("aria-hidden='true'");
+            $('#modalLoading').modal('hide');
+        }
+    </script>
+    
+    <script>
+        $(document).ready(function () {
+            $('#mskCedula').mask('999-9999999-9');
+
+            $('#mskCedula').keydown(function (e) {
+                $("#listDatosVerificados").hide();
+                if (e.which == 13) {
+                    if (validaCedula(document.getElementById("mskCedula"))) {
+                        getDatosVerificacion();
+                    }
+                }
+            });
+
+            $("#btnVerificarCedula").click(function () {
+                $("#listDatosVerificados").hide();
+                if (validaCedula(document.getElementById("mskCedula"))) {
+                    getDatosVerificacion();
+                }
+            });
+
+        });//termina document ready
+
+        function getDatosVerificacion(campo) {
+            $.ajax({
+                type: "POST",
+                async: false,
+                url: "verificate.html/getDatosVerificacion",
+                data: "{'campo':'" + $('#mskCedula').val() + "','circunscripcion':'" + $("#circunscripcion").val() + "'}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var m = response.d.split("|");
+                    if (m[0] == 0) {
+                        swal("Error", m[1], "error")
+                    } else if (m[0] == 1) {
+                        $("#listDatosVerificados").hide();
+                        $('#listDatosVerificados').show();
+                        $('#listDatosVerificados').empty().append(m[1]);
+                        //eval(m[1]);
+                    } else if (m[0] == 2) {
+                        $('#listDatosVerificados').hide();
+                        $("#listDatosVerificados0").show();
+                        $("#listDatosVerificados2").empty().append(m[1]);
+                        eval(m[2]);
+                        //eval(m[1]);
+                    } else {
+                        swal("Error", m, "info")
+                    }
+
+                    return false;
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Respuesta = " + XMLHttpRequest.responseText + "\n Estatus = " + textStatus + "\n Error = " + errorThrown, "Error: buscarValorComite");
+                }
+            });
+        }
+
+        function digitoVerificador(cedula) {
+            //Mod 10 el recorido es de derecha a izquierda pero se que no 10 Posiciones
+            x = 1;
+            suma = 0;
+            tsuma = 0;
+            i = 0;
+            verificador = 0;
+            for (var i = 0; i <= 9; i++) {
+                suma = parseInt(cedula.substr(i, 1)) * x;
+                if (suma > 9)
+                { suma = parseInt(suma.toString().substr(0, 1)) + parseInt(suma.toString().substr(1, 1)); }
+                tsuma = tsuma + suma;
+                x++;
+                if (x > 2)
+                { x = 1 };
+            }
+            mod = tsuma % 10;
+            if (mod != 0)
+            { verificador = 10 - mod; }
+            if (verificador == parseInt(cedula.substr(10, 1)))
+                return true;
+            else
+                return false;
+        }
+
+        function validaCedula(cedula) {
+            cedula11 = "";
+            $("#" + cedula.id).css("border-color", "lightgrey");
+            var retorna = true;
+            if (cedula.value == "") {
+                //alert("La cedula no esta completa por favor verifique...");
+                swal("Error", "La cedula no esta completa por favor verifique...!", "error")
+                cedula.focus();
+                retorna = false;
+            }
+
+            if (retorna == true) {
+                if (cedula.value.length > 0) {
+                    cedula11 = cedula.value.replace(/-/g, "");
+                    if (cedula11.length != 11) {
+                        //alert("La cedula no esta completa por favor verifique...");
+                        swal("Error", "La cedula no esta completa por favor verifique...!", "error")
+                        cedula.focus();
+                        retorna = false;
+                    }
+                    else {
+                        if (digitoVerificador(cedula11) != true) {
+                            //alert("La cedula no esta digitada correctamente, por favor verifique...");
+                            swal("Error", "La cedula no esta digitada correctamente, por favor verifique...!", "error")
+                            cedula.focus();
+                            retorna = false;
+                        }
+                    }
+                }
+            }
+
+            if (retorna == false) {
+                $("#" + cedula.id).css("border-color", "red");
+            }
+
+            return retorna;
+        }
+      
+    </script>
+</head>
+<body>
+
+    <header class="navbar navbar-inverse navbar-fixed-top wet-asphalt" role="banner">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="Default.html" style="padding: 5px 5px !important;">
+                    <h1>Luis
+                        <div style="color: #FF0000;">Abinader</div>
+                        <small>Movimiento Cambio Nacional</small>   </h1>
+
+                    <!-- <img src="images/logo.png" alt="logo"> -->
+                </a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="Default.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Biografia</a></li>
+                    <li><a href="verificate.html">Verificate</a></li>
+                    
+                    <li><a href="comiteAfectivo.html">Formulario de Inscripción</a></li>
+                    <li><a href="somos.html">Quienes Somos</a></li>
+                    <li><a href="contactanos.html">Contacto</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+    <!--/header-->
+
+    <div id="body">
+        
+        <section class="content-wrapper main-content clear-fix">
+            
+    <section id="title" class="clouds">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-6">
+                    <h1>Verificate</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ul class="breadcrumb pull-right">
+                        <li><a href="index.html">Home</a></li>
+                        <li class="active">Verificate</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact-page" class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                    <div class=" panel-body">
+                        <div id="formVerificate" class="form-horizontal col-sm-6 col-sm-offset-3" role="form">
+                            <div class="form-group ">
+                                <label class=" col-sm-1 control-label">Cédula</label>
+                                <div class=" col-sm-6">
+                                    <input type="text" class="form-control" id="mskCedula">
+                                    <input type="hidden" id="circunscripcion" value="03" />
+                                </div>
+                                <div class=" col-sm-2">
+                                    <a href="javascript:void(0)" class="btn btn-primary" id="btnVerificarCedula"><i class="glyphicon glyphicon-search"></i>&nbsp; Verificar</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="row" style="min-height: 470px;">
+            <div class="col-sm-4 col-sm-offset-4">
+                <h4>Resultado de Busqueda</h4>
+            </div>
+            <div class="col-sm-8 col-sm-offset-2" id="listDatosVerificados" style="display: none;">
+            </div>
+            <div class="col-sm-12" id="listDatosVerificados0">
+                <dl class="dl-horizontal">
+                    <dt></dt>
+                    <dd id="txtCantidad"></dd>
+                </dl>
+                <div class="col-sm-12" id="listDatosVerificados2">
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+
+        </section>
+    </div>
+    <section id="bottom" class="wet-asphalt">
+        <div class="container">
+            <div class="row">
+            </div>
+        </div>
+    </section>
+    <!--/#bottom-->
+
+    <footer id="footer" class="midnight-blue">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-6">
+                    &copy; 2020 <a target="_blank" href="#" title="Titulo del pagina">Movimiento Cambio Nacional</a>. Todos los Derechos Reservados.
+                </div>
+                <div class="col-sm-6">
+                    <ul class="pull-right">
+                        <li><a href="Default.aspx">Inicio</a></li>
+                        <li><a href="nosotros.aspx">Biografia</a></li>
+                        <li><a href="verificate.aspx">Verificate</a></li>
+                        
+                        <li><a href="comiteAfectivo.aspx">Formulario de Inscripción</a></li>
+                        <li><a href="somos.aspx">Quienes Somos</a></li>
+                        <li><a href="contactanos.aspx">Contacto</a></li>
+                        <li><a id="gototop" class="gototop" href="#"><i class="icon-chevron-up"></i></a></li>
+                        <!--#gototop-->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div id="modalLoading" class="modal fade bs-example-modal-sm" style="z-index: 99999" role="dialog">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <img src="images/loading.GIF" alt="imagen cargando">
+                    <span>Procesando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--/#footer-->
+</body>
+</html>

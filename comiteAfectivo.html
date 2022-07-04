@@ -1,0 +1,908 @@
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" /><meta name="author" /><title>
+	
+</title><link href="css/bootstrap.min.css" rel="stylesheet" /><link href="css/font-awesome.min.css" rel="stylesheet" /><link href="css/prettyPhoto.css" rel="stylesheet" /><link href="css/animate.css" rel="stylesheet" /><link href="js/sweetalert/dist/sweetalert.css" rel="stylesheet" /><link href="js/DataTables/DataTables-1.10.11/css/dataTables.bootstrap.min.css" rel="stylesheet" /><link href="css/main.css" rel="stylesheet" />
+    <style>
+        @media (max-width: 500px)
+        {
+            .navbar-brand
+            {
+                padding: 5px 5px !important;
+            }
+
+                .navbar-brand h1
+                {
+                    font-size: 20px;
+                }
+
+            #main-slider .carousel .item
+            {
+            }
+        }
+
+        @media (max-width: 500px)
+        {
+            #main-slider .carousel .item
+            {
+                height: 250px;
+            }
+        }
+    </style>
+    <!--[if lt IE 9]>
+    <script src="js/html5shiv.js"></script>
+    <script src="js/respond.min.js"></script>
+    <![endif]-->
+    <link rel="shortcut ico" href="images/ico/favicon.ico" />
+
+    
+
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.prettyPhoto.js"></script>
+    <script src="js/jQuery-Mask-Plugin-master/dist/jquery.mask.min.js"></script>
+    <script src="js/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="js/DataTables/DataTables-1.10.11/js/jquery.dataTables.min.js"></script>
+    <script src="js/DataTables/DataTables-1.10.11/js/dataTables.bootstrap.min.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        var longitud = '';
+        var latitud = '';
+        var altitud = '';
+
+        navigator.geolocation.getCurrentPosition(function (position) {
+            longitud = position.coords.longitude;
+            latitud = position.coords.latitude;
+            altitud = position.coords.altitude;
+        });
+
+        $(document).ready(function () {
+
+        });
+
+        function validarEmail(control) {
+            $("#" + control).css("border-color", "lightgrey");
+            expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            expr2 = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            if (!expr.test($("#" + control).val().trim()) && !expr2.test($("#" + control).val().trim())) {
+                $("#" + control).css("border-color", "red");
+                //alert($("#" + control).val() + ", no es un correo valido!");
+                swal("Error", $("#" + control).val() + ", no es un correo valido!")
+                $("#" + control).focus();
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+
+        function digitoVerificador(cedula) {
+            //Mod 10 el recorido es de derecha a izquierda pero se que no 10 Posiciones
+            x = 1;
+            suma = 0;
+            tsuma = 0;
+            i = 0;
+            verificador = 0;
+            for (var i = 0; i <= 9; i++) {
+                suma = parseInt(cedula.substr(i, 1)) * x;
+                if (suma > 9)
+                { suma = parseInt(suma.toString().substr(0, 1)) + parseInt(suma.toString().substr(1, 1)); }
+                tsuma = tsuma + suma;
+                x++;
+                if (x > 2)
+                { x = 1 };
+            }
+            mod = tsuma % 10;
+            if (mod != 0)
+            { verificador = 10 - mod; }
+            if (verificador == parseInt(cedula.substr(10, 1)))
+                return true;
+            else
+                return false;
+        }
+
+        function validarAreaCode(val) {
+            if (idProvincia < '61') {
+                var tel = val.split(" ")[0];
+                if (tel == '(809)' || tel == '(829)' || tel == '(849)') {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            else {
+                return true;
+            }
+        }
+
+        function validarCampos(frmValidar) {
+            var id = "";
+            var val = "";
+            var guadar = true;
+            var dataVal = "";
+            var dataSize = 0;
+            var label = "";
+
+            $(frmValidar).find(':input:not([type="hidden"])').each(function () {
+                id = this.id
+                val = $(this).val();
+                dataVal = $(this).data("valid");
+                //dataSize = $(this).data("size");
+
+                label = $("label[for='" + id + "']").text();
+                if (label == undefined || label == "") {
+                    label = $(this).attr("placeholder");
+                }
+
+                if (dataVal != undefined || dataVal != "" || id != undefined || id != "") {
+                    //vacio
+                    if (val.length <= 0 && dataVal.indexOf("_R") > -1) {
+                        guadar = false;
+                        this.focus();
+                        msg = "El campo " + label + " es obligatorio...!";
+                        swal("Error", msg, "error")
+                        return false
+                    }
+                    else if (dataVal.indexOf("_T") > -1 && val.length > 0) {
+                        if (validarAreaCode(val) == false) {
+                            guadar = false;
+                            this.focus();
+                            msg = "El campo " + label + " es telefonico debe completar Ej. (809) 123-4567...!";
+                            swal("Error", msg, "error")
+                            return false
+                        }
+                    }
+                    else if (dataVal.indexOf("_F") > -1) {
+                        if (!isDate(fechammddyy(val))) {
+                            guadar = false;
+                            msg = "El campo " + label + " es obligatorio...!";
+                            swal({
+                                title: "Error!",
+                                text: msg,
+                                type: "error"
+                            }, function () {
+                                swal.close();
+                                $('#' + id).val('').focus();
+                            });
+                            return false
+                        }
+                    }
+                }
+            });
+
+            return guadar
+        }
+
+        function isDate(fecha) {
+            return ((new Date(fecha) !== "Invalid Date" && !isNaN(new Date(fecha)))) ? true : false;
+        }
+        function fechayymmdd(fecha) {
+            var Retorna = "";
+            if (fecha.length == 10) {
+                var fec = fecha.split('/');
+                Retorna = fec[2] + "/" + fec[1] + "/" + fec[0];
+            }
+            return Retorna;
+        }
+        function fechammddyy(fecha) {
+            var Retorna = "";
+            if (fecha.length == 10) {
+                var fec = fecha.split('/');
+                Retorna = fec[1] + "/" + fec[0] + "/" + fec[2];
+            }
+            return Retorna;
+        }
+        function MostrarProgreso() {
+            tiempoInicio = new Date();
+            if ($("#modalLoading").is(":visible") != true) {
+                $("#modalLoading").modal({
+                    keyboard: false,
+                    backdrop: 'static'
+                });
+            }
+        }
+
+        function OcultarProgreso() {
+            tiempofinal = new Date();
+            var tiempo = ((tiempofinal - tiempoInicio) / 1000);
+            if (tiempo > 0.5) {
+                OcultarProgresoContinua()
+            }
+            else {
+                setTimeout(OcultarProgresoContinua, 1000);
+            }
+        }
+        function OcultarProgresoContinua() {
+            $('#modalLoading').addClass("aria-hidden='true'");
+            $('#modalLoading').modal('hide');
+        }
+    </script>
+    
+    <link href="js/select2/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="js/select2/dist/js/select2.min.js"></script>
+    <script>
+        var idProvincia = 0;
+        $(document).ready(function () {
+            $('#mskCedulaPadre').mask('999-9999999-9');
+            $('#mskCedulaHijo').mask('999-9999999-9');
+
+            $('#mskCelular').mask('(999) 999-9999');
+            $('#mskTelefono1').mask('(999) 999-9999');
+            $('#txtFecha').mask('99/99/9999');
+
+            $("select").each(function () {
+                if (this.id.indexOf('_NO') == -1) {
+                    LLenaCombo(this);
+                }
+            });
+
+            $('#mskCedulaPadre,#mskCedulaHijo').keypress(function (e) {
+                var id = $(this).attr('id');
+
+                if (id == "mskCedulaPadre") {
+                    tipoConsulta = 1;
+                } else if (id == "mskCedulaHijo") {
+                    tipoConsulta = 2;
+                }
+
+                if (tipoConsulta == 1) {
+                    $("#txtNombrePadre").val("");
+                } else if ((tipoConsulta == 2)) {
+                    $("#txtNombreHijo").val("");
+                }
+
+                if (e.which == 13) {
+                    if (validaCedula2(tipoConsulta)) {
+                        getNombreCompleto(tipoConsulta);
+
+                    }
+                }
+            });
+
+            $('#mskCedulaPadre,#mskCedulaHijo').focusout(function (e) {
+                var id = $(this).attr('id');
+
+                if (id == "mskCedulaPadre") {
+                    tipoConsulta = 1;
+                } else if (id == "mskCedulaHijo") {
+                    tipoConsulta = 2;
+                }
+
+                if ($.trim($('#mskCedulaPadre').val()) != '') {
+                    if ($('#mskCedulaPadre').val() == $('#mskCedulaHijo').val()) {
+                        msg = "Cedula del Empadronador es igual a Cedula, por favor verique...";
+                        swal("Error", msg, "info")
+                        $('#mskCedulaHijo').val('');
+                        return false;
+                    }
+                }
+                
+                if (validaCedula2(tipoConsulta)) {
+                    getNombreCompleto(tipoConsulta);
+                    if (tipoConsulta == 2) {
+                        verificarSiesta();
+                    }
+                    else {
+                        if (id == "mskCedulaPadre") {
+                            verificarSiHijo();
+                        }
+                    }
+                }
+
+            });
+
+
+            $("#ddlidMunicipio").change(function () {
+                buscarProvincia();
+            });
+
+            $("#btnGuardar").click(function () {
+                var Retorna = 0;
+                if (validarCampos("#formComiteAFectivo")) {
+                    if (validaComite()) {
+                        if ($('#mskCelular').val() == '' && $('#mskTelefono1').val() == '') {
+                            msg = "Debe tener o un Celular o un Telefono, por favor verique...";
+                            swal("Error", msg, "info")
+                        }
+                        else {
+                            if ($('#canal1').is(':checked') == false && $('#canal2').is(':checked') == false && $('#canal3').is(':checked') == false && $('#canal4').is(':checked') == false) {
+                                msg = "Debe tener Chequeado por lo menos un canal, por favor verique...";
+                                swal("Error", msg, "info")
+                            }
+                            else {
+                                grabarComiteAFectivo();
+                            }
+                        }
+                    }
+                }
+            });
+
+            $("#btnLimpiar").click(function () {
+                $("textarea,input[type='text']").val("");
+                $("#ddlidMunicipio").val(0).trigger('change');
+                $('#canal1').prop("checked", false);
+                $('#canal2').prop("checked", false);
+                $('#canal3').prop("checked", false);
+                $('#canal4').prop("checked", false);
+            });
+
+        }); //termina  document ready
+        function verificarSiesta() {
+            $.ajax({
+                type: "POST",
+                async: false,
+                url: "comiteAfectivo.html/verificarSiesta",
+                data: "{'cedulaPadre':'" + $('#mskCedulaPadre').val() + "','cedulaHijo':'" + $('#mskCedulaHijo').val() + "'}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var m = response.d
+                    if (m != '') {
+                        swal("Error", m, "error")
+                        $('#mskCedulaHijo').val('');
+                    }
+                    return false;
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Respuesta = " + XMLHttpRequest.responseText + "\n Estatus = " + textStatus + "\n Error = " + errorThrown + "Error: verificarSiesta");
+                }
+            });
+        }
+        function verificarSiHijo() {
+            $.ajax({
+                type: "POST",
+                async: false,
+                url: "comiteAfectivo.html/verificarSiHijo",
+                data: "{'cedulaPadre':'" + $('#mskCedulaPadre').val() + "'}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var m = response.d
+                    if (m != '') {
+                        swal("Error", m, "error")
+                        $('#mskCedulaPadre').val('');
+                    }
+                    return false;
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Respuesta = " + XMLHttpRequest.responseText + "\n Estatus = " + textStatus + "\n Error = " + errorThrown + "Error: mskCedulaPadre");
+                }
+            });
+        }
+        function getNombreCompleto(tipoConsulta) {
+            var id = $(this).attr('id');
+
+            if (tipoConsulta == 1) {
+                id = "mskCedulaPadre"
+            } else if (tipoConsulta == 2) {
+                id = "mskCedulaHijo"
+            }
+
+            $.ajax({
+                type: "POST",
+                async: false,
+                url: "comiteAfectivo.html/getNombreCompleto",
+                data: "{'campo':'" + $('#' + id).val() + "','circunscripcion':'" + $("#circunscripcion").val() + "','tipoConsulta':" + tipoConsulta + "}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var m = response.d.split("|");
+
+                    if (m[0] == 0) {
+                        swal("Error", m[1], "error")
+                    } else if (m[0] == 1) {
+                        eval(m[1]);
+                    } else {
+                        swal("Error", m, "info")
+                    }
+
+                    return false;
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Respuesta = " + XMLHttpRequest.responseText + "\n Estatus = " + textStatus + "\n Error = " + errorThrown, "Error: buscarValorComite");
+                }
+            });
+        }
+
+
+        function LLenaCombo(control) {
+
+            $.ajax({
+                type: "POST",
+                async: false,
+                url: "comiteAfectivo.html/LlenaCombo",
+                data: "{'combo':'" + control.id + "'}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var m = response.d;
+                    $('#' + control.id).find('option').remove().end();
+                    $.each(m, function (val, text) {
+                        $('#' + control.id).append($('<option></option>').val(text.Value).html(text.Text));
+                    });
+                    $('#' + control.id).val(0).val(0).trigger('change');
+                    $('#' + control.id).select2();
+                    return false;
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Respuesta = " + XMLHttpRequest.responseText + "\n Estatus = " + textStatus + "\n Error = " + errorThrown, "Error: Llenando Combo");
+                }
+            });
+        }
+
+        function validaCedula2(opc) {
+            var cedVal = "";
+            var cedula = {};
+
+            if (opc == 1) {
+                cedula = $("#mskCedulaPadre")
+            } else if (opc == 2) {
+                cedula = $("#mskCedulaHijo")
+            }
+            if (cedula.val() == "") {
+                return false;
+            }
+
+
+            cedula11 = "";
+            cedula.css("border-color", "lightgrey");
+            var retorna = true;
+            if (cedula.val() == "") {
+                //alert("La cedula no esta completa por favor verifique...");
+                swal("Error", "La cedula no esta completa por favor verifique...!", "error")
+                cedula.focus();
+                retorna = false;
+            }
+
+            if (retorna == true) {
+                if (cedula.val().length > 0) {
+                    cedula11 = cedula.val().replace(/-/g, "");
+                    if (cedula11.length != 11) {
+                        //alert("La cedula no esta completa por favor verifique...");
+                        swal("Error", "La cedula no esta completa por favor verifique...!", "error")
+                        cedula.focus();
+                        retorna = false;
+                    }
+                    else {
+                        if (digitoVerificador(cedula11) != true) {
+                            //alert("La cedula no esta digitada correctamente, por favor verifique...");
+                            swal("Error", "La cedula no esta digitada correctamente, por favor verifique...!", "error")
+                            cedula.focus();
+                            retorna = false;
+                        }
+                    }
+                }
+            }
+            if (retorna == false) {
+                cedula.css("border-color", "red");
+            } else {
+                if (opc == 2) {
+                    retorna = validaRepetido()
+                }
+            }
+            return retorna;
+        }
+
+        function grabarComiteAFectivo() {
+            var Retorna = 0;
+            var json = "";
+            var canal1 = 0;
+            var canal2 = 0
+            var canal3 = 0
+            var canal4 = 0
+
+            if ($('#canal1').is(':checked')) {
+                canal1 = 1;
+            }
+            if ($('#canal2').is(':checked')) {
+                canal2 = 1;
+            }
+            if ($('#canal3').is(':checked')) {
+                canal3 = 1;
+            }
+            if ($('#canal4').is(':checked')) {
+                canal4 = 1;
+            }
+
+            json += "'fecha':'" + fechayymmdd($("#txtFecha").val()) + "'"
+            json += ",'idMunicipio':'" + $("#ddlidMunicipio").val() + "'"
+            json += ",'cedulaPadre':'" + $("#mskCedulaPadre").val() + "'"
+            json += ",'cedulaHijo':'" + $("#mskCedulaHijo").val() + "'"
+            json += ",'direccion':'" + $("#txaDireccion").val() + "'"
+            json += ",'telefono':'" + $("#mskTelefono1").val() + "'"
+            json += ",'celular':'" + $("#mskCelular").val() + "'"
+            json += ",'email':'" + $("#txtEmail").val() + "'"
+            json += ",'codigoPostal':'" + $("#txtCodigoPostal").val() + "'"
+            json += ",'longitud':'" + longitud + "'"
+            json += ",'latitud':'" + latitud + "'"
+            json += ",'altitud':'" + altitud + "'"
+            json += ",'canal1':'" + canal1 + "'"
+            json += ",'canal2':'" + canal2 + "'"
+            json += ",'canal3':'" + canal3 + "'"
+            json += ",'canal4':'" + canal4 + "'"
+
+
+            $.ajax({
+                type: "POST",
+                async: false,
+                url: "comiteAfectivo.html/grabarComiteAFectivo",
+                data: "{" + json + "}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var m = response.d.split("|");
+
+                    if (m[0] == 0) {
+                        swal("Error", m[1], "error")
+                    } else if (m[0] == 1) {
+                        swal("Mensaje!", m[1], "success")
+                        $("#btnLimpiar").click();
+                        Retorna = 1;
+                    } else {
+                        swal("Mensaje", m, "info")
+                    }
+
+                    return false;
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Respuesta grabarComiteAFectivo() = " + XMLHttpRequest.responseText + "\n Estatus = " + textStatus + "\n Error = " + errorThrown, "Error: buscarValorComite");
+                }
+            });
+
+            return Retorna;
+        }
+
+
+        function validaComite() {
+            var Retorna = true;
+
+            Retorna = validaCedula2(1);
+            if (Retorna == true) {
+                Retorna = validaCedula2(2);
+            }
+            return Retorna;
+        }
+
+        function getNoComite() {
+            $.ajax({
+                type: "POST",
+                async: false,
+                url: "comiteAfectivo.html/getNoComite",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var m = response.d.split("|");
+                    if (m[0] == 0) {
+                        swal("Error", m[1], "error")
+                    } else if (m[0] == 1) {
+                        eval(m[1]);
+                    } else {
+                        swal("Error", m, "info")
+                    }
+                    return false;
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Respuesta getNoComite() = " + XMLHttpRequest.responseText + "\n Estatus = " + textStatus + "\n Error = " + errorThrown, "Error: buscarValorComite");
+                }
+            });
+        }
+
+        function validaRepetido() {
+            var Retorna = true
+
+            $.ajax({
+                type: "POST",
+                async: false,
+                url: "comiteAfectivo.html/validaRepetido",
+                data: "{'comite':'" + $("#mskNoComite").val() + "','cedulaHijo':'" + $("#mskCedulaHijo").val() + "'}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    var m = response.d.split("|");
+
+                    if (m[0] == 1) {
+                        swal("Mensaje!", m[1], "error")
+                        $("#mskCedulaHijo").val("").focus();
+                        Retorna = false;
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Respuesta validaRepetido() = " + XMLHttpRequest.responseText + "\n Estatus = " + textStatus + "\n Error = " + errorThrown, "Error: buscarValorComite");
+                }
+            });
+
+            return Retorna;
+        }
+        /*function validarEmail(control) {
+            $("#" + control).css("border-color", "lightgrey");
+            expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            expr2 = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            if (!expr.test($("#" + control).val().trim()) && !expr2.test($("#" + control).val().trim())) {
+                $("#" + control).css("border-color", "red");
+                //alert($("#" + control).val() + ", no es un correo valido!");
+                swal("Error", $("#" + control).val() + ", no es un correo valido!")
+                $("#" + control).focus();
+                return false;
+            }
+            else {
+                return true;
+            }
+        }*/
+
+        function buscarProvincia() {
+            $.ajax({
+                type: "POST",
+                async: true,
+                url: "comiteAfectivo.html/buscarProvincia",
+                data: "{'idMunicipio':'" + $('#ddlidMunicipio').val() + "'}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    $('#txtProvincia').val(response.d.split("|")[0]);
+                    idProvincia = response.d.split("|")[1];
+                    if (idProvincia < '61') {
+                        $('#mskCelular').unmask().mask('(999) 999-9999');
+                        $('#mskTelefono1').unmask().mask('(999) 999-9999');
+                    }
+                    else {
+                        $('#mskCelular').unmask();
+                        $('#mskTelefono1').unmask();
+                    }
+
+                    return false;
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Respuesta = " + XMLHttpRequest.responseText + "\n Estatus = " + textStatus + "\n Error = " + errorThrown, "Error: buscarProvincia");
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <header class="navbar navbar-inverse navbar-fixed-top wet-asphalt" role="banner">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="Default.html" style="padding: 5px 5px !important;">
+                    <h1>Luis
+                        <div style="color: #FF0000;">Abinader</div>
+                        <small>Movimiento Cambio Nacional</small>   </h1>
+
+                    <!-- <img src="images/logo.png" alt="logo"> -->
+                </a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="Default.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Biografia</a></li>
+                    <li><a href="verificate.html">Verificate</a></li>
+                    
+                    <li><a href="comiteAfectivo.html">Formulario de Inscripción</a></li>
+                    <li><a href="somos.html">Quienes Somos</a></li>
+                    <li><a href="contactanos.html">Contacto</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+    <!--/header-->
+
+    <div id="body">
+        
+        <section class="content-wrapper main-content clear-fix">
+            
+    <section id="title" class="clouds">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-6">
+                    <h1>Formulario de Inscripción</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ul class="breadcrumb pull-right">
+                        <li><a href="index.html">Inicio</a></li>
+                        <li class="active">Inscripción</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="page-header">
+                    <h4>Formulario de Inscripción</h4>
+                </div>
+                <form id="formComiteAFectivo" class="form-horizontal" role="form" onsubmit="return false">
+                    <div class="form-group ">
+                        
+                        <div>
+                            <label for="txtFecha" class=" col-sm-2 control-label">Fecha</label>
+                            <div class=" col-sm-2">
+                                <input type="text" class="form-control" id="txtFecha" data-valid="_G_R_F">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group ">
+                        <label for="mskCedulaPadre" class=" col-sm-2 control-label">Cédula Empadronador</label>
+                        <div class=" col-sm-2 input-group">
+                            <input type="text" class="form-control" id="mskCedulaPadre" data-valid="_R">
+                            <div id="btnConsultarCedula1" class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>
+                        </div>
+                        <div class=" col-sm-6">
+                            <input type="text" class="form-control" id="txtNombrePadre" disabled="disabled" data-valid="_R">
+                        </div>
+                    </div>
+                    <div class="form-group ">
+                        <label for="mskCedulaHijo" class=" col-sm-2 control-label">Cédula</label>
+                        <div class=" col-sm-2 input-group">
+                            <input type="text" class="form-control" id="mskCedulaHijo" data-valid="">
+                            <div id="btnConsultarCedula2" class="input-group-addon"><i class="glyphicon glyphicon-search"></i></div>
+                        </div>
+                        <div class=" col-sm-6">
+                            <input type="text" class="form-control" id="txtNombreHijo" disabled="disabled" data-valid="_R">
+                        </div>
+                    </div>
+                    <div class="form-group ">
+                        <div>
+                            <label for="txtEdad" class=" col-sm-2 control-label">Edad</label>
+                            <div class=" col-sm-2">
+                                <input type="text" class="form-control" id="txtEdad" disabled="disabled" data-valid="">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="txtSexo" class=" col-sm-2 control-label">Sexo</label>
+                            <div class=" col-sm-4">
+                                <input type="text" class="form-control" id="txtSexo" disabled="disabled" data-valid="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group ">
+                        <label for="txaDireccion" class=" col-sm-2 control-label">Dirección</label>
+                        <div class=" col-sm-8">
+                            <textarea rows="3" class="form-control" id="txaDireccion" data-valid="_G">
+                            </textarea>
+                        </div>
+                    </div>
+                    <div class="form-group ">
+                        <div>
+                            <label for="ddlidMunicipio" class=" col-sm-2 control-label">Municipio</label>
+                            <div class=" col-sm-3">
+                                <select class="form-control" id="ddlidMunicipio" data-valid="_G_R">
+                                    <option value="0">[Seleccione]</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="txtProvincia" class=" col-sm-2 control-label">Provincia</label>
+                            <div class=" col-sm-3">
+                                <input type="text" class="form-control" id="txtProvincia" disabled="disabled" data-valid="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group ">
+                        <div>
+                            <label for="mskTelefono1" class=" col-sm-2 control-label">Teléfono</label>
+                            <div class=" col-sm-3">
+                                <input type="text" class="form-control" id="mskTelefono1" data-valid="_T">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="mskCelular" class=" col-sm-2 control-label">Celular</label>
+                            <div class=" col-sm-3">
+                                <input type="text" class="form-control" id="mskCelular" data-valid="_R_T">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group ">
+                        <div>
+                            <label for="txtEmail" class=" col-sm-2 control-label">Email</label>
+                            <div class=" col-sm-3">
+                                <input type="text" class="form-control" id="txtEmail" data-valid="">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="txtCodigoPostal" class=" col-sm-2 control-label">Código Postal</label>
+                            <div class=" col-sm-3">
+                                <input type="text" class="form-control" id="txtCodigoPostal" data-valid="">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group ">
+                        <div>
+                            <label for="txtColegio" class=" col-sm-2 control-label">Colegio Electoral</label>
+                            <div class=" col-sm-1">
+                                <input type="text" class="form-control" id="txtColegio" disabled="disabled" data-valid="">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="txtNombreRecinto" class=" col-sm-2 control-label">Nombre Recinto</label>
+                            <div class=" col-sm-5">
+                                <input type="text" class="form-control" id="txtNombreRecinto" disabled="disabled" data-valid="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group ">
+                        <div>
+                            <label for="" class=" col-sm-2 control-label">Quiero Participar en CANAL:</label>
+                            <div class=" col-sm-5">
+                                <input type="checkbox" id="canal1" data-valid="">
+                                <label for="canal1">Solo Para Votar</label><br>
+                                <input type="checkbox" id="canal2" data-valid="">
+                                <label for="canal2">Participar en Actividades</label><br>
+                                <input type="checkbox" id="canal3" data-valid="">
+                                <label for="canal3">Coordinar</label><br>
+                                <input type="checkbox" id="canal4" data-valid="">
+                                <label for="canal4">Buscar nuevos Afiliados</label><br>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group ">
+                        <label class=" col-sm-2 control-label"></label>
+                        <div class=" col-sm-6">
+                            <a href="javascript:void(0)" class="btn btn-primary" id="btnGuardar">Guardar</a>
+                            <a href="javascript:void(0)" class="btn btn-danger" id="btnLimpiar">Crear Nuevo</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </section>
+
+        </section>
+    </div>
+    <section id="bottom" class="wet-asphalt">
+        <div class="container">
+            <div class="row">
+            </div>
+        </div>
+    </section>
+    <!--/#bottom-->
+
+    <footer id="footer" class="midnight-blue">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-6">
+                    &copy; 2020 <a target="_blank" href="#" title="Titulo del pagina">Movimiento Cambio Nacional</a>. Todos los Derechos Reservados.
+                </div>
+                <div class="col-sm-6">
+                    <ul class="pull-right">
+                        <li><a href="Default.html">Inicio</a></li>
+                        <li><a href="nosotros.html">Biografia</a></li>
+                        <li><a href="verificate.html">Verificate</a></li>
+                        
+                        <li><a href="comiteAfectivo.html">Formulario de Inscripción</a></li>
+                        <li><a href="somos.html">Quienes Somos</a></li>
+                        <li><a href="contactanos.html">Contacto</a></li>
+                        <li><a id="gototop" class="gototop" href="#"><i class="icon-chevron-up"></i></a></li>
+                        <!--#gototop-->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <div id="modalLoading" class="modal fade bs-example-modal-sm" style="z-index: 99999" role="dialog">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <img src="images/loading.GIF" alt="imagen cargando">
+                    <span>Procesando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--/#footer-->
+</body>
+</html>

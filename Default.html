@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" />
+        <meta name="author" />
+        <title>
+            Inicio
+        </title>
+        <link href="css/bootstrap.min.css" rel="stylesheet" />
+        <link href="css/font-awesome.min.css" rel="stylesheet" />
+        <link href="css/prettyPhoto.css" rel="stylesheet" />
+        <link href="css/animate.css" rel="stylesheet" />
+        <link href="js/sweetalert/dist/sweetalert.css" rel="stylesheet" />
+        <link href="js/DataTables/DataTables-1.10.11/css/dataTables.bootstrap.min.css" rel="stylesheet" />
+        <link href="css/main.css" rel="stylesheet" />
+        <style>
+            @media (max-width: 500px) {
+                .navbar-brand {
+                    padding: 5px 5px !important;
+                }
+
+                .navbar-brand h1 {
+                    font-size: 20px;
+                }
+
+                #main-slider .carousel .item {}
+            }
+
+            @media (max-width: 500px) {
+                #main-slider .carousel .item {
+                    height: 250px;
+                }
+            }
+        </style>
+        <!--[if lt IE 9]>
+    <script src="js/html5shiv.js"></script>
+    <script src="js/respond.min.js"></script>
+    <![endif]-->
+        <link rel="shortcut ico" href="images/ico/favicon.ico" />
+
+
+
+        <script src="js/jquery.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/jquery.prettyPhoto.js"></script>
+        <script src="js/jQuery-Mask-Plugin-master/dist/jquery.mask.min.js"></script>
+        <script src="js/sweetalert/dist/sweetalert.min.js"></script>
+        <script src="js/DataTables/DataTables-1.10.11/js/jquery.dataTables.min.js"></script>
+        <script src="js/DataTables/DataTables-1.10.11/js/dataTables.bootstrap.min.js"></script>
+        <script src="js/main.js"></script>
+        <script>
+            var longitud = '';
+            var latitud = '';
+            var altitud = '';
+
+            navigator.geolocation.getCurrentPosition(function (position) {
+                longitud = position.coords.longitude;
+                latitud = position.coords.latitude;
+                altitud = position.coords.altitude;
+            });
+
+            $(document).ready(function () {
+
+            });
+
+            function validarEmail(control) {
+                $("#" + control).css("border-color", "lightgrey");
+                expr = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+                expr2 = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+                if (!expr.test($("#" + control).val().trim()) && !expr2.test($("#" + control).val().trim())) {
+                    $("#" + control).css("border-color", "red");
+                    //alert($("#" + control).val() + ", no es un correo valido!");
+                    swal("Error", $("#" + control).val() + ", no es un correo valido!")
+                    $("#" + control).focus();
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+
+            function digitoVerificador(cedula) {
+                //Mod 10 el recorido es de derecha a izquierda pero se que no 10 Posiciones
+                x = 1;
+                suma = 0;
+                tsuma = 0;
+                i = 0;
+                verificador = 0;
+                for (var i = 0; i <= 9; i++) {
+                    suma = parseInt(cedula.substr(i, 1)) * x;
+                    if (suma > 9) {
+                        suma = parseInt(suma.toString().substr(0, 1)) + parseInt(suma.toString().substr(1, 1));
+                    }
+                    tsuma = tsuma + suma;
+                    x++;
+                    if (x > 2) {
+                        x = 1
+                    };
+                }
+                mod = tsuma % 10;
+                if (mod != 0) {
+                    verificador = 10 - mod;
+                }
+                if (verificador == parseInt(cedula.substr(10, 1)))
+                    return true;
+                else
+                    return false;
+            }
+
+            function validarAreaCode(val) {
+                if (idProvincia < '61') {
+                    var tel = val.split(" ")[0];
+                    if (tel == '(809)' || tel == '(829)' || tel == '(849)') {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return true;
+                }
+            }
+
+            function validarCampos(frmValidar) {
+                var id = "";
+                var val = "";
+                var guadar = true;
+                var dataVal = "";
+                var dataSize = 0;
+                var label = "";
+
+                $(frmValidar).find(':input:not([type="hidden"])').each(function () {
+                    id = this.id
+                    val = $(this).val();
+                    dataVal = $(this).data("valid");
+                    //dataSize = $(this).data("size");
+
+                    label = $("label[for='" + id + "']").text();
+                    if (label == undefined || label == "") {
+                        label = $(this).attr("placeholder");
+                    }
+
+                    if (dataVal != undefined || dataVal != "" || id != undefined || id != "") {
+                        //vacio
+                        if (val.length <= 0 && dataVal.indexOf("_R") > -1) {
+                            guadar = false;
+                            this.focus();
+                            msg = "El campo " + label + " es obligatorio...!";
+                            swal("Error", msg, "error")
+                            return false
+                        } else if (dataVal.indexOf("_T") > -1 && val.length > 0) {
+                            if (validarAreaCode(val) == false) {
+                                guadar = false;
+                                this.focus();
+                                msg = "El campo " + label +
+                                    " es telefonico debe completar Ej. (809) 123-4567...!";
+                                swal("Error", msg, "error")
+                                return false
+                            }
+                        } else if (dataVal.indexOf("_F") > -1) {
+                            if (!isDate(fechammddyy(val))) {
+                                guadar = false;
+                                msg = "El campo " + label + " es obligatorio...!";
+                                swal({
+                                    title: "Error!",
+                                    text: msg,
+                                    type: "error"
+                                }, function () {
+                                    swal.close();
+                                    $('#' + id).val('').focus();
+                                });
+                                return false
+                            }
+                        }
+                    }
+                });
+
+                return guadar
+            }
+
+            function isDate(fecha) {
+                return ((new Date(fecha) !== "Invalid Date" && !isNaN(new Date(fecha)))) ? true : false;
+            }
+
+            function fechayymmdd(fecha) {
+                var Retorna = "";
+                if (fecha.length == 10) {
+                    var fec = fecha.split('/');
+                    Retorna = fec[2] + "/" + fec[1] + "/" + fec[0];
+                }
+                return Retorna;
+            }
+
+            function fechammddyy(fecha) {
+                var Retorna = "";
+                if (fecha.length == 10) {
+                    var fec = fecha.split('/');
+                    Retorna = fec[1] + "/" + fec[0] + "/" + fec[2];
+                }
+                return Retorna;
+            }
+
+            function MostrarProgreso() {
+                tiempoInicio = new Date();
+                if ($("#modalLoading").is(":visible") != true) {
+                    $("#modalLoading").modal({
+                        keyboard: false,
+                        backdrop: 'static'
+                    });
+                }
+            }
+
+            function OcultarProgreso() {
+                tiempofinal = new Date();
+                var tiempo = ((tiempofinal - tiempoInicio) / 1000);
+                if (tiempo > 0.5) {
+                    OcultarProgresoContinua()
+                } else {
+                    setTimeout(OcultarProgresoContinua, 1000);
+                }
+            }
+
+            function OcultarProgresoContinua() {
+                $('#modalLoading').addClass("aria-hidden='true'");
+                $('#modalLoading').modal('hide');
+            }
+        </script>
+    </head>
+
+    <body>
+
+        <header class="navbar navbar-inverse navbar-fixed-top wet-asphalt" role="banner">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="Default.html" style="padding: 5px 5px !important;">
+                        <h1>Luis
+                            <div style="color: #FF0000;">Abinader</div>
+                            <small>Movimiento Cambio Nacional</small> </h1>
+
+                        <!-- <img src="images/logo.png" alt="logo"> -->
+                    </a>
+                </div>
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="Default.html">Inicio</a></li>
+                        <li><a href="nosotros.html">Biografia</a></li>
+                        <li><a href="verificate.html">Verificate</a></li>
+
+                        <li><a href="comiteAfectivo.html">Formulario de Inscripción</a></li>
+                        <li><a href="somos.html">Quienes Somos</a></li>
+                        <li><a href="contactanos.html">Contacto</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <!--/header-->
+
+        <div id="body">
+
+            <section class="content-wrapper main-content clear-fix">
+
+                <section id="main-slider" class="no-margin">
+                    <div class="carousel slide wet-asphalt">
+                        <ol class="carousel-indicators">
+                            <li data-target="#main-slider" data-slide-to="0" class="active"></li>
+                            <li data-target="#main-slider" data-slide-to="1"></li>
+                            <li data-target="#main-slider" data-slide-to="2"></li>
+                            <li data-target="#main-slider" data-slide-to="3"></li>
+                            <li data-target="#main-slider" data-slide-to="4"></li>
+                        </ol>
+                        <div class="carousel-inner">
+                            <div class="item  active">
+                                <img src="images/slider/slide1.jpg" class="img-responsive" style="margin: 0 auto;" />
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item">
+                                <img src="images/slider/slide2.jpg" class="img-responsive" style="margin: 0 auto;" />
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item">
+                                <img src="images/slider/slide3.jpg" class="img-responsive" style="margin: 0 auto;" />
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item">
+                                <img src="images/slider/slide4.jpg" class="img-responsive" style="margin: 0 auto;" />
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item">
+                                <img src="images/slider/slide5.jpg" class="img-responsive" style="margin: 0 auto;" />
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--/.item-->
+                        <!--/.item-->
+                    </div>
+                    <!--/.carousel-inner-->
+
+                    <!--/.carousel-->
+                    <a class="prev" href="#main-slider" data-slide="prev">
+                        <i class="icon-angle-left"></i>
+                    </a>
+                    <a class="next" href="#main-slider" data-slide="next">
+                        <i class="icon-angle-right"></i>
+                    </a>
+                </section>
+                <!--/#main-slider-->
+                <!--/#services-->
+
+            </section>
+        </div>
+        <section id="bottom" class="wet-asphalt">
+            <div class="container">
+                <div class="row">
+                </div>
+            </div>
+        </section>
+        <!--/#bottom-->
+
+        <footer id="footer" class="midnight-blue">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-6">
+                        &copy; 2020 <a target="_blank" href="#" title="Titulo del pagina">Movimiento Cambio
+                            Nacional</a>. Todos los Derechos Reservados.
+                    </div>
+                    <div class="col-sm-6">
+                        <ul class="pull-right">
+                            <li><a href="Default.html">Inicio</a></li>
+                            <li><a href="nosotros.html">Biografia</a></li>
+                            <li><a href="verificate.html">Verificate</a></li>
+
+                            <li><a href="comiteAfectivo.html">Formulario de Inscripción</a></li>
+                            <li><a href="somos.html">Quienes Somos</a></li>
+                            <li><a href="contactanos.html">Contacto</a></li>
+                            <li><a id="gototop" class="gototop" href="#"><i class="icon-chevron-up"></i></a></li>
+                            <!--#gototop-->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <div id="modalLoading" class="modal fade bs-example-modal-sm" style="z-index: 99999" role="dialog">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-body text-center">
+                        <img src="images/loading.GIF" alt="imagen cargando">
+                        <span>Procesando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--/#footer-->
+    </body>
+
+</html>
